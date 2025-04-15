@@ -29,6 +29,8 @@ const DataModel = mongoose.model('Data', DataSchema);
 const MediaSchema = new mongoose.Schema({
     type: { type: String, enum: ['image', 'video'], required: true },
     url: { type: String, required: true },
+    name: { type: String, required: true },
+    points: { type: Number, required: true }
 });
 const MediaModel = mongoose.model('Media', MediaSchema);
 
@@ -67,15 +69,22 @@ app.get('/fetch', async (req, res) => {
     }
 });
 
-// Upload Media
+// Upload Media with name and points
 app.post('/upload', upload.single('file'), async (req, res) => {
     try {
         const fileType = req.file.mimetype.startsWith('image') ? 'image' : 'video';
         const fileUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+        const { name, points } = req.body;
+
+        if (!name || !points) {
+            return res.status(400).json({ message: 'Name and points are required' });
+        }
 
         const newMedia = new MediaModel({
             type: fileType,
-            url: fileUrl
+            url: fileUrl,
+            name,
+            points: parseInt(points)
         });
 
         await newMedia.save();
